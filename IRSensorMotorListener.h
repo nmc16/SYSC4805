@@ -26,6 +26,8 @@ class IRSensorMotorListener : public IRListener {
         char* toString(char* buffer, size_t bufferSize);
 
     private:
+        void walkLine(uint8_t rightData, uint8_t leftData);
+        void moonWalk(uint8_t rightData, uint8_t leftData);
         MovementControl *movementControl;
 };
 

@@ -15,7 +15,7 @@ char s[256];
 void setup() {
   // put your setup code here, to run once:
   movementControl.setDirection(Direction::FORWARD);
-  movementControl.setSpeed(10);
+  movementControl.setSpeed(6);
   sensorControl.addListener(&motorListener);
 }
 
@@ -23,16 +23,16 @@ void loop() {
   // Print out the current stats on the motor
   // This takes up large amount of memory so remove when we are done
   Serial.begin(115200);
-  Serial.print(movementControl.toString(s, 256));
+  //Serial.print(movementControl.toString(s, 256));
   memset(s, 0, sizeof(s));
-  Serial.println();
-  Serial.print(sensorControl.toString(s, 256));
-  memset(s, 0, sizeof(s));
+  //Serial.println();
+  Serial.print(motorListener.toString(s, 256));
+  //memset(s, 0, sizeof(s));
   Serial.println();
   Serial.println();
   
   // put your main code here, to run repeatedly:
   sensorControl.readSensors();
-  delay(100);
+  delay(10);
 }
 

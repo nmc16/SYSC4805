@@ -84,12 +84,14 @@ void MovementControl::updateMotor() {
 			/* We only need to stop the right motor so that the left motor
 			 * will continue in either direction */
 			this->motorRightSpeed = MOTOR_SPEED(0, this->motorRightDirection);
+			this->motorLeftSpeed = MOTOR_SPEED(this->currentSpeedLevel, this->motorLeftDirection);
 			break;
 		}
 		case Direction::LEFT:
 		{
 			/* We only need to stop the left motor so that the right will
 			 * continue in either direction */
+			this->motorRightSpeed = MOTOR_SPEED(this->currentSpeedLevel, this->motorRightDirection);
 			this->motorLeftSpeed = MOTOR_SPEED(0, this->motorLeftDirection);
 			break;
 		}

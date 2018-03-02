@@ -48,7 +48,9 @@ void IRSensorControl::readSensors() {
         return;
     }
 
+    /* Set the flag for debugging purposes */
     updated = true;
+
     /* Otherwise update the cache and call the listeners */
     this->rightData = newRightData;
     this->leftData = newLeftData;

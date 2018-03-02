@@ -1,270 +1,333 @@
 /**************************************************************
  * File: IRSensorMotorListener.h
  *
- * Description: 
+ * Description:
  *
- * Public Functions: 
- * 
+ * Public Functions:
+ *
  * @author Group 1
  **************************************************************/
 
 #include "IRSensorMotorListener.h"
 
-#define WHITE 0
-#define BLACK 1
+/* Define methods to determine the color of the sensor */
+#define ISBLACK(x) x
+#define ISWHITE(x) !x
 
-Direction direction = Direction::BACKWARD;
-uint8_t speed = 255;
-uint8_t currentStep = 0;
+/* Define the step names */
+#define WALK_LINE_ONE 0
+#define TURN_ON_LINE_TWO 1
+#define WALK_LINE_TWO 2
+#define TURN_ON_LINE_THREE 3
+#define WALK_LINE_THREE 4
+#define TURN_ON_LINE_FOUR 5
+#define WALK_LINE_FOUR 6
+#define TURN_ON_LINE_FIVE 7
+#define WALK_LINE_FIVE 8
+#define TURN_ON_LINE_SIX 9
+#define WALK_LINE_SIX 10
+#define TURN_ON_LINE_SEVEN 11
+#define WALK_LINE_SEVEN 12
+#define STOP_ROBOT 13
 
-uint8_t reset = 0;
-uint8_t blackCount = 0;
+/* Define the max intervals on black consecutively before we stop */
+#define MAX_BLACK_INTERVAL 10
 
 IRSensorMotorListener::IRSensorMotorListener(MovementControl *controller) {
     this->movementControl = controller;
+    this->blackIntervalCount = 0;
+}
+
+void IRSensorMotorListener::updateSpeed(uint8_t s) {
+    /* Tell the motor to change speed and store it locally */
+    /* TODO: Should just add a retrieve in the motor controller */
+    this->movementControl->setSpeed(s);
+    this->speed = s;
+}
+
+void IRSensorMotorListener::updateDirection(Direction d) {
+    /* Tell the motor to change direction and store it locally */
+    /* TODO: Should just add a retrieve in the motor controller */
+    this->movementControl->setDirection(d);
+    this->direction = d;
 }
 
 void IRSensorMotorListener::walkLine(uint8_t rightData, uint8_t leftData) {
-    if (reset && rightData && !leftData) {
-        reset = 0;
-        this->movementControl->setDirection(Direction::FORWARD);
-        direction = Direction::FORWARD;
-    }
 
-    if (reset) {
-        return;
-    }
-
-    /* If both sensors are on white */
-    if (rightData == WHITE && leftData == WHITE) {
-        /* Then we need to turn towards the line */
-        this->movementControl->setDirection(Direction::RIGHT);
-        direction = Direction::RIGHT;
-    
-    } else if (rightData == BLACK && leftData == WHITE) {
+    /* Change the direction based on the sensor data */
+    if (ISWHITE(rightData) && ISWHITE(leftData)) {
         /*
-         * If the right sensor is on black and the left is on white 
-         * we want to start going straight again
+         * If both sensors are white then we are straddling the line and
+         * and we can move forward again
          */
+        this->updateDirection(Direction::RIGHT);
 
-        this->movementControl->setDirection(Direction::FORWARD);
-        direction = Direction::FORWARD;
-    
-    } else if (rightData == WHITE && leftData == BLACK) {
+    } else if (ISBLACK(rightData) && ISWHITE(leftData)) {
+        /*
+         * If the right sensor is on black and the left is on white
+         * we want to try and push the right sensor back to the white
+         * so initiate a left turn
+         */
+        this->updateDirection(Direction::LEFT);
+
+    } else if (ISWHITE(rightData) && ISBLACK(leftData)) {
         /*
          * If the right sensor is on white and the left sensor
-         * is on black we need to turn left
+         * is on black we want to initiate a right turn to push the sensor
+         * back onto the white
          */
-        reset = 1;
-        this->movementControl->setDirection(Direction::LEFT);
-        direction = Direction::LEFT;
+        this->updateDirection(Direction::RIGHT);
     }
 
-    /* If they both are on black we don't know what to do */
-}
-
-void IRSensorMotorListener::moonWalk(uint8_t rightData, uint8_t leftData) {
-    if (reset && rightData == WHITE && leftData == BLACK) {
-        reset = 0;
-        this->movementControl->setDirection(Direction::FORWARD);
-        direction = Direction::FORWARD;
-    }
-
-    if (reset) {
-        return;
-    }
-
-    /* If both sensors are on white */
-    if (rightData == WHITE && leftData == WHITE) {
-        /* Then we need to turn towards the line */
-        this->movementControl->setDirection(Direction::LEFT);
-        direction = Direction::LEFT;
-    
-    } else if (rightData == BLACK && leftData == WHITE) {
-        /*
-         * If the right sensor is on black and the left is on white 
-         * we want to get back to the line
-         */
-
-        reset = 1;
-        this->movementControl->setDirection(Direction::RIGHT);
-        direction = Direction::RIGHT;
-    
-    } else if (rightData == WHITE && leftData == BLACK) {
-        /*
-         * If the right sensor is on white and the left sensor
-         * is on black we can start going forward again
-         */
-        this->movementControl->setDirection(Direction::FORWARD);
-        direction = Direction::FORWARD;
-    }
-
-    /* If they both are on black we don't know what to do */
+    /*
+     * If they are both on black the update code should be moving to a
+     * new state so we will do nothing here
+     */
 }
 
 void IRSensorMotorListener::update(uint8_t rightData, uint8_t leftData) {
-
-    switch (currentStep) {
-        /* Step zero goes along the first straight away */
-        case 0: {
-            /* 
-             * If we hit two black lines we need to start to execute 
-             * the left turn 
+    switch (this->currentStep) {
+        case WALK_LINE_ONE: {
+            /*
+             * Step 0: Walk the first line
+             * Change Event: Both sensors hit black line
+             * Outcome: Initiate left turn
              */
-            if (rightData && leftData) {
-                /* Start executing the left turn */
-                this->movementControl->setDirection(Direction::LEFT);
-                direction = Direction::LEFT;
-                currentStep++;
-            } else {
-                /* Otherwise we just walk the line like normal */
-                this->walkLine(rightData, leftData);
-            }
-
-            break;
-        }
-        case 1: {
-            /* 
-             * Step 1: Execute turn to line 2
-             * Goal is to wait for the right sensor to hit white during its turn 
-             */
-            if (!rightData) {
-                currentStep++;
-            }
-            break;
-        }
-        case 2: {
-            /* 
-             * Step 2: Finish turn to line 2
-             * Goal is to wait for the sensor to find the black line again
-             */
-            if (rightData && !leftData) {
-                this->movementControl->setDirection(Direction::FORWARD);
-                direction = Direction::FORWARD;
-                currentStep++;
-            }
-            break;
-        }
-        case 3: {
-            /* 
-             * Step 3: Follow the line 2 until we hit T in road
-             * Initiate right turn from line 2 to line 3
-             */
-            if (rightData == BLACK && leftData == BLACK) {
-                this->movementControl->setDirection(Direction::RIGHT);
-                direction = Direction::RIGHT;
-                currentStep++;
-            } else {
-                /* Otherwise keep walking the line */
-                this->walkLine(rightData, leftData);
-            }
-            break;
-        }
-        case 4: {
-            /* 
-             * Step 4: Keep turning until the left sensor hits
-             *         the black line on line 3.
-             * Goal: Stop the turn and begin walking line 3 to 4.
-             */
-            delay(1700);
-            currentStep++;
-
-            /* Otherwise we want it to keep turning */
-            break;
-        }
-        case 5: {
-            this->moonWalk(rightData, leftData);
-            currentStep++;
-
-            break;
-        }
-        case 6: {
-            /* 
-             * Step 6: Walk on line 4 until we hit junction of line 5.
-             * Goal: Turn left on line 5.
-             */
-            if (rightData == BLACK && leftData == BLACK) {
-                this->movementControl->setDirection(Direction::LEFT);
-                direction = Direction::LEFT;
-                currentStep++;
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the left turn and change state */
+                this->updateDirection(Direction::LEFT);
+                this->currentStep++;
             } else {
                 /* Otherwise walk the line */
-                this->moonWalk(rightData, leftData);
+                this->walkLine(rightData, leftData);
             }
+
             break;
         }
-        case 7: {
-            /* 
-             * Step 7: Turn until we've inverted the sensors so that
-             *         right now follows the black line on line 6.
-             * Goal: Stop the turn when right following line.
+        case TURN_ON_LINE_TWO: {
+            /*
+             * Step 1: Turn left onto line 2
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking line 2
              */
-            if (rightData == BLACK && leftData == WHITE) {
-                this->moonWalk(rightData, leftData);
-                currentStep++;
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the left turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
             }
 
             /* Otherwise keep turning */
             break;
         }
-        case 8: {
-            /* Turn right on line 6 */
-            if (rightData == BLACK && leftData == BLACK) {
-                this->movementControl->setDirection(Direction::RIGHT);
-                direction = Direction::RIGHT;
-                currentStep++;
-            } else {
-                this->moonWalk(rightData, leftData);
-            }
+        case WALK_LINE_TWO: {
+            /*
+             * Step 2: Walk line 2 until we hit double black again
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate right turn
+             */
+             if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                 /* Initiate the right turn and change state */
+                 this->updateDirection(Direction::RIGHT);
+                 this->currentStep++;
+             } else {
+                 /* Otherwise walk the line */
+                 this->walkLine(rightData, leftData);
+             }
+
             break;
         }
-        case 9: {
-            if (rightData == WHITE && leftData == BLACK) {
-                this->moonWalk(rightData, leftData);
-                currentStep++;
+        case TURN_ON_LINE_THREE: {
+            /*
+             * Step 3: Turn right onto line 3
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 3
+             */
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
             }
 
-            /* Otherwise keep turning */
+            /* Otherwise keep turning onto line 3 */
             break;
         }
-        case 10: {
-            /* Turn right on line 7 */
-            if (rightData == BLACK && leftData == BLACK) {
-                this->movementControl->setDirection(Direction::RIGHT);
-                direction = Direction::RIGHT;
-                currentStep++;
+        case WALK_LINE_THREE: {
+            /*
+             * Step 4: Walk along line 3 until we hit double black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate right turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::RIGHT);
+                this->currentStep++;
             } else {
-                this->moonWalk(rightData, leftData);
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
             }
+
             break;
         }
-        case 11: {
-            if (blackCount > 3) {
-                currentStep++;
+        case TURN_ON_LINE_FOUR: {
+            /*
+             * Step 5: Turn right onto line 4
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 4
+             */
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
             }
-            if (rightData == BLACK && leftData == BLACK) {
-                blackCount++;
+
+            /* Otherwise keep turning onto line 4 */
+            break;
+        }
+        case WALK_LINE_FOUR: {
+            /*
+             * Step 6: Walk along line 4 until we hit double black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate left turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the left turn and change state */
+                this->updateDirection(Direction::LEFT);
+                this->currentStep++;
             } else {
-                blackCount = 0;
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
             }
-            this->moonWalk(rightData, leftData);
+
             break;
         }
-        case 12: {
-            this->movementControl->setSpeed(0);
+        case TURN_ON_LINE_FIVE: {
+            /*
+             * Step 7: Turn left onto line 5
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 5
+             */
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
+            }
+
+            /* Otherwise keep turning onto line 5 */
+            break;
+        }
+        case WALK_LINE_FIVE: {
+            /*
+             * Step 8: Walk along line 5 until we hit double black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate right turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::RIGHT);
+                this->currentStep++;
+            } else {
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
+            }
+
+            break;
+        }
+        case TURN_ON_LINE_SIX: {
+            /*
+             * Step 9: Turn right onto line 6
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 6
+             */
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
+            }
+
+            /* Otherwise keep turning onto line 6 */
+            break;
+        }
+        case WALK_LINE_SIX: {
+            /*
+             * Step 10: Walk along line 6 until we hit double black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate right turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::RIGHT);
+                this->currentStep++;
+            } else {
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
+            }
+
+            break;
+        }
+        case TURN_ON_LINE_SEVEN: {
+            /*
+             * Step 11: Turn right onto line 7
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 7
+             */
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
+            }
+
+            /* Otherwise keep turning onto line 6 */
+            break;
+        }
+        case WALK_LINE_SEVEN: {
+            /*
+             * Step 12: Walk down line seven until the end is hit
+             * Change Event: Both sensors remain on black
+             * Outcome: Stop the robot
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* We remained in black so add to the counter */
+                this->blackIntervalCount++;
+            } else {
+                /* If we are not still on black we have to reset counter */
+                this->blackIntervalCount = 0;
+            }
+
+            /* If we reached the end of the maze stop the robot */
+            if (this->blackIntervalCount > MAX_BLACK_INTERVAL) {
+                this->currentStep++;
+            }
+            break;
+
+        }
+        case STOP_ROBOT: {
+            /*
+             * Step 13: Stop the robot
+             * Change Event: None
+             * Outcome: Robot should be complete maze
+             */
+            this->updateSpeed(0);
+
+            /*
+             * Instead of constantly setting the speed to 0 let's just
+             * add one to the state which should be hitting the default
+             * case and just breaking every time
+             */
+            this->currentStep++;
             break;
         }
         default: {
+            /* There's not really anything we can do here */
             break;
         }
     }
 }
 
 char* IRSensorMotorListener::toString(char* buffer, size_t bufferSize) {
-    snprintf(buffer, 
-	         bufferSize, 
-			 "IRSensorMotorListener[Direction=%d, Speed=%d, Step=%d, Controller=%p]", 
-			 direction, speed, currentStep, this->movementControl);
+    snprintf(buffer,
+	         bufferSize,
+			 "IRSensorMotorListener[Direction=%d, Speed=%d, Step=%d, Controller=%p]",
+			 this->direction, this->speed, this->currentStep, this->movementControl);
 
 	return buffer;
 }

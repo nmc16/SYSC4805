@@ -1,10 +1,10 @@
 /**************************************************************
  * File: IRSensorMotorListener.h
  *
- * Description: 
+ * Description:
  *
- * Public Functions: 
- * 
+ * Public Functions:
+ *
  * @author Group 1
  **************************************************************/
 
@@ -27,9 +27,13 @@ class IRSensorMotorListener : public IRListener {
 
     private:
         void walkLine(uint8_t rightData, uint8_t leftData);
-        void moonWalk(uint8_t rightData, uint8_t leftData);
+        void updateDirection(Direction d);
+        void updateSpeed(uint8_t s);
         MovementControl *movementControl;
+        uint8_t blackIntervalCount;
+        uint8_t currentStep;
+        uint8_t speed;
+        Direction direction;
 };
 
 #endif // define
-

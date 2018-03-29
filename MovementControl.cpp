@@ -21,7 +21,7 @@
 #define MOTOR_DIRECTION_FORWARD 1
 #define MOTOR_DIRECTION_BACKWARD 0
 #define MOTOR_SPEED(level, direction, scale) {\
-	(uint8_t) ((direction) ? (10 - level) * SPEED_MULTIPLIER * scale : (level) * SPEED_MULTIPLIER * scale)}
+	(uint8_t) ((direction) ? (10 - (level * scale)) * SPEED_MULTIPLIER : (level * scale) * SPEED_MULTIPLIER)}
 
 MovementControl::MovementControl(uint8_t A_IA, uint8_t A_IB, uint8_t B_IA, uint8_t B_IB) {
 	/* Store the pins that were passed in */
@@ -73,10 +73,12 @@ void MovementControl::setSpeed(uint8_t speed) {
 
 void MovementControl::setLeftScale(float factor) {
 	this->motorLeftScale = factor;
+	updateMotor();
 }
 
 void MovementControl::setRightScale(float factor) {
 	this->motorRightScale = factor;
+	updateMotor();
 }
 
 void MovementControl::updateMotor() {

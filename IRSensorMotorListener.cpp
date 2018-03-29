@@ -28,10 +28,10 @@
 #define WALK_LINE_SIX 10
 #define TURN_ON_LINE_SEVEN 11
 #define WALK_LINE_SEVEN 12
-#define STOP_ROBOT 13
+#define STOP_ROBOT 19
 
 /* Define the max intervals on black consecutively before we stop */
-#define MAX_BLACK_INTERVAL 10
+#define MAX_BLACK_INTERVAL 5
 
 IRSensorMotorListener::IRSensorMotorListener(MovementControl *controller) {
     this->movementControl = controller;
@@ -68,7 +68,7 @@ void IRSensorMotorListener::walkLine(uint8_t rightData, uint8_t leftData) {
          * we want to try and push the right sensor back to the white
          * so initiate a left turn
          */
-        this->updateDirection(Direction::LEFT);
+        this->updateDirection(Direction::RIGHT);
 
     } else if (ISWHITE(rightData) && ISBLACK(leftData)) {
         /*
@@ -76,7 +76,7 @@ void IRSensorMotorListener::walkLine(uint8_t rightData, uint8_t leftData) {
          * is on black we want to initiate a right turn to push the sensor
          * back onto the white
          */
-        this->updateDirection(Direction::RIGHT);
+        this->updateDirection(Direction::LEFT);
     }
 
     /*
@@ -110,6 +110,7 @@ void IRSensorMotorListener::update(uint8_t rightData, uint8_t leftData) {
              * Change Event: Both sensors hit white
              * Outcome: Begin walking line 2
              */
+            delay(200);
             if (ISWHITE(rightData) && ISWHITE(leftData)) {
                 /* Stop the left turn and change state */
                 this->walkLine(rightData, leftData);
@@ -142,6 +143,7 @@ void IRSensorMotorListener::update(uint8_t rightData, uint8_t leftData) {
              * Change Event: Both sensors hit white
              * Outcome: Begin walking on line 3
              */
+            
             if (ISWHITE(rightData) && ISWHITE(leftData)) {
                 /* Stop the right turn and change state */
                 this->walkLine(rightData, leftData);
@@ -281,24 +283,130 @@ void IRSensorMotorListener::update(uint8_t rightData, uint8_t leftData) {
         }
         case WALK_LINE_SEVEN: {
             /*
-             * Step 12: Walk down line seven until the end is hit
+             * Step 12: Walk down line seven until both sensors hit black
              * Change Event: Both sensors remain on black
-             * Outcome: Stop the robot
+             * Outcome: Initiate right turn
              */
             if (ISBLACK(rightData) && ISBLACK(leftData)) {
-                /* We remained in black so add to the counter */
-                this->blackIntervalCount++;
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::RIGHT);
+                this->currentStep++;
             } else {
-                /* If we are not still on black we have to reset counter */
-                this->blackIntervalCount = 0;
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
             }
 
-            /* If we reached the end of the maze stop the robot */
-            if (this->blackIntervalCount > MAX_BLACK_INTERVAL) {
-                this->currentStep++;
-            }
             break;
 
+        }
+        case 13: {
+            /*
+             * Step 13: Turn right onto line 8
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 8
+             */
+            delay(200);
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the right turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
+            }
+
+            /* Otherwise keep turning onto line 6 */
+            break;
+        }
+        case 14: {
+            /*
+             * Step 14: Walk down line 8-9 until both sensors hit black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate left turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::LEFT);
+                this->currentStep++;
+            } else {
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
+            }
+
+            break;
+        }
+        case 15: {
+            /*
+             * Step 15: Turn right onto line 10
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 10
+             */
+            /* Change the direction based on the sensor data */
+    if (ISWHITE(rightData) && ISWHITE(leftData)) {
+        /*
+         * If both sensors are white then we are straddling the line and
+         * and we can move forward again
+         */
+        this->updateDirection(Direction::LEFT);
+
+    } else if (ISBLACK(rightData) && ISWHITE(leftData)) {
+        /*
+         * If the right sensor is on black and the left is on white
+         * we want to try and push the right sensor back to the white
+         * so initiate a left turn
+         */
+        this->updateDirection(Direction::RIGHT);
+
+    } else if (ISWHITE(rightData) && ISBLACK(leftData)) {
+        /*
+         * If the right sensor is on white and the left sensor
+         * is on black we want to initiate a right turn to push the sensor
+         * back onto the white
+         */
+        this->updateDirection(Direction::LEFT);
+    } else if (ISBLACK(rightData) && ISBLACK(leftData)) {
+        this->blackIntervalCount++;
+        if (this->blackIntervalCount > 10) {
+            this->updateSpeed(0);
+        }
+    }
+
+            /* Otherwise keep turning onto line 6 */
+            break;
+        }
+        case 16: {
+            /*
+             * Step 16: Walk down line 9 until both sensors hit black
+             * Change Event: Both sensors hit black
+             * Outcome: Initiate left turn
+             */
+            if (ISBLACK(rightData) && ISBLACK(leftData)) {
+                /* Initiate the right turn and change state */
+                this->updateDirection(Direction::LEFT);
+                this->currentStep++;
+            } else {
+                /* Otherwise walk the line */
+                this->walkLine(rightData, leftData);
+            }
+
+            break;
+        }
+        case 17: {
+            /*
+             * Step 17: Turn left onto line 10
+             * Change Event: Both sensors hit white
+             * Outcome: Begin walking on line 10
+             */
+            delay(100);
+            if (ISWHITE(rightData) && ISWHITE(leftData)) {
+                /* Stop the left turn and change state */
+                this->walkLine(rightData, leftData);
+                this->currentStep++;
+            }
+
+            /* Otherwise keep turning onto line 6 */
+            break;
+        }
+        case 18: {
+            this->walkLine(rightData, leftData);
+            break;
         }
         case STOP_ROBOT: {
             /*

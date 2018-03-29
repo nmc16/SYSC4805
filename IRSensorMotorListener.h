@@ -16,7 +16,8 @@
 #include <stdint.h>
 
 /* Package Includes */
-#include "MovementControl.h"
+#include "MovementControl.hpp"
+#include "IRSensorControl.h"
 
 /* Class Definitions */
 class IRSensorMotorListener : public IRListener {

@@ -14,11 +14,8 @@
 
 /* Package includes */
 #include "USSensor.hpp"
+#include "USSensorListener.hpp"
 #include "Collection.h"
-
-class USSensorListener {
-
-};
 
 class USSensorController {
     public:

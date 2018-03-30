@@ -20,7 +20,7 @@ USSensor::USSensor(uint8_t triggerPin, uint8_t echoPin) {
     pinMode(this->echoPin, INPUT);
 }
 
-uint8_t USSensor::readDistance(uint8_t timeout) {
+int8_t USSensor::readDistance(uint8_t timeout) {
     uint16_t duration;
     
     /* Send the pulse for 10 microseconds */
@@ -34,5 +34,11 @@ uint8_t USSensor::readDistance(uint8_t timeout) {
     }
 
     /* Calculate the distance in cm */
-    return (int8_t) (duration * 0.0171);
+    this->lastDistance = this->currentDistance;
+    this->currentDistance = (int8_t) (duration * 0.0171);
+    return this->currentDistance;
+}
+
+boolean USSensor::isNewDistance() {
+    return this->currentDistance == this->lastDistance;
 }

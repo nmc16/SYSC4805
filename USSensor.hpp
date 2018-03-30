@@ -36,10 +36,22 @@ class USSensor {
          */
         int8_t readDistance(uint8_t timeout);
 
+        /**
+         * Returns true if the last distance read was different than
+         * the one before it.
+         * 
+         * @return boolean True if the distance has changed, False otherwise
+         */
+        boolean isNewDistance();
+
     private:
         /* Variables to hold the pins */
         uint8_t triggerPin;
         uint8_t echoPin;
+
+        /* Hold the most recent data to check for changes */
+        int8_t lastDistance;
+        int8_t currentDistance;
 };
 
 #endif

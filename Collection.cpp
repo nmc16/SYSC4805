@@ -17,9 +17,13 @@
 /* Includes */
 #include "Collection.h"
 #include "IRSensorControl.h"
+#include "USSensor.hpp"
+#include "USSensorListener.hpp"
 
 /* TODO: This is pretty ugly but I need it to compile */
 template class Collection<IRListener*>;
+template class Collection<USSensor*>;
+template class Collection<USSensorListener*>;
 
 template<typename T>
 Collection<T>::Collection() {

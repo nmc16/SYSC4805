@@ -1,14 +1,13 @@
 import pygame
 import pygame.midi
-from pygame.locals import *
-import bluetooth
 import serial
+from pygame.locals import *
 
 pygame.init()
 
 pygame.fastevent.init()
 post_event = pygame.fastevent.post
-
+s = serial.Serial(port="/dev/cu.HC-06-SPPDev", baudrate=9600)
 pygame.midi.init()
 in_id = pygame.midi.get_default_input_id()
 print("Got ID: %d\n" % in_id)
@@ -31,7 +30,10 @@ while True:
         print("Note Events: %s" % str(midi_evs))
         for m_e in midi_evs:
             pygame.fastevent.post(m_e)
-
+            print("Data sent: " + str(m_e.data1))
+            if m_e.data2 != 127:
+                s.write(str(m_e.data1))
+            #s.write("/n")
 print "exit button clicked."
 i.close()
 pygame.midi.quit()

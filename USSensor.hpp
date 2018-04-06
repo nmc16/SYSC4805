@@ -34,7 +34,7 @@ class USSensor {
          * @param timeout Max time to wait in microseconds
          * @return int8_t Distance in centimeters to any barrier
          */
-        int8_t readDistance(uint8_t timeout);
+        int8_t readDistance(uint16_t timeout);
 
         /**
          * Returns true if the last distance read was different than

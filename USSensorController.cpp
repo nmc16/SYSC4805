@@ -27,24 +27,25 @@ void USSensorController::readSensors() {
     size_t i;
     int8_t distances[this->sensors.size()];
     boolean requiresUpdate = false;
-    Serial.begin(115200);
 
     /* Read all the distance values from the sensors */
     for (i = 0; i < this->sensors.size(); i++) {
-        distances[i] = this->sensors[i]->readDistance(0);
-        Serial.println(distances[i]);
+        distances[i] = this->sensors[i]->readDistance(3000);
+        Serial.print("Sensor ");
+        Serial.print(i);
+        Serial.print(": ");
+        Serial.print(distances[i]);
+        Serial.println();
         requiresUpdate |= this->sensors[i]->isNewDistance();
     }
 
     /* If there was no change we can just leave the method */
     if (!requiresUpdate) {
-        Serial.println("Not updating listeners");
         return;
     }
 
     /* Otherwise we need to update all the listeners */
-    Serial.println("Updating listeners");
-    for (i = 0; this->listeners.size(); i++) {
+    for (i = 0; i < this->listeners.size(); i++) {
         this->listeners[i]->update(distances, this->sensors.size());
     }
 }

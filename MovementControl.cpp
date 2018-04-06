@@ -14,6 +14,7 @@
 #include "MovementControl.hpp"
 
 /* Defines */
+#define TURN_AROUND_DELAY 1250
 #define TO_STRING_BUFFER_SIZE 256
 #define SPEED_MULTIPLIER 25
 #define SPEED_LEVEL_STOPPED 0
@@ -128,6 +129,47 @@ void MovementControl::updateMotor() {
 	digitalWrite(this->pinADirection, this->motorRightDirection);
 	analogWrite(this->pinBSpeed, this->motorLeftSpeed);
 	analogWrite(this->pinASpeed, this->motorRightSpeed);
+}
+
+void MovementControl::slightLeft() {
+	analogWrite(this->pinASpeed, MOTOR_SPEED(this->currentSpeedLevel, this->motorRightDirection, this->motorRightScale));
+	analogWrite(this->pinBSpeed, MOTOR_SPEED(this->currentSpeedLevel * 0.6, this->motorLeftDirection, this->motorLeftScale));
+}
+
+void MovementControl::pivotRight() {
+	digitalWrite(this->pinBDirection, MOTOR_DIRECTION_FORWARD);
+	digitalWrite(this->pinADirection, MOTOR_DIRECTION_BACKWARD);
+	analogWrite(this->pinASpeed, 250);
+	analogWrite(this->pinBSpeed, 0);
+}
+
+void MovementControl::stopPivot() {
+	this->currentDirection = Direction::FORWARD;
+	this->updateMotor();
+}
+
+void MovementControl::turnAround() {
+	/* Start pivoting the robot */
+	digitalWrite(this->pinBDirection, MOTOR_DIRECTION_FORWARD);
+	digitalWrite(this->pinADirection, MOTOR_DIRECTION_BACKWARD);
+	//analogWrite(MOTOR_SPEED(this->currentSpeedLevel, MOTOR_DIRECTION_BACKWARD, this->motorRightScale), this->motorRightSpeed);
+	//analogWrite(MOTOR_SPEED(this->currentSpeedLevel, MOTOR_DIRECTION_FORWARD, this->motorLeftScale), this->motorLeftSpeed);
+	analogWrite(this->pinASpeed, 250);
+	analogWrite(this->pinBSpeed, 0);
+	Serial.print("DELAYING...");
+    Serial.println();
+	/* Wait until we are pointing the right direction */
+    delay(TURN_AROUND_DELAY);
+    Serial.print("DONE...");
+    Serial.println();
+
+	/* Start the robot moving forward again */
+	this->currentDirection = Direction::FORWARD;
+	this->updateMotor();
+}
+
+Direction MovementControl::getDirection() {
+	return this->currentDirection;
 }
 
 char* MovementControl::toString(char* buffer, size_t buffer_size) {

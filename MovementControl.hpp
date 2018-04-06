@@ -62,6 +62,24 @@ class MovementControl
          * @param factor Scaling factor for the right motor.
          */
 		void setRightScale(float factor);
+		
+		void slightRight();
+		void slightLeft();
+		void pivotRight();
+		void stopPivot();
+
+        /**
+         * Pivots the robot to turn it 180 degrees. Uses
+		 * a delay timer to try and obtain the correct orientation.
+         */
+		void turnAround();
+
+		/**
+		 * Retrieves the current direction of the robot.
+		 * 
+		 * @return Direction The current direction of the robot
+		 */
+		Direction getDirection();
 
 		/**
 		 * Writes the string representation of the motor state to the buffer.

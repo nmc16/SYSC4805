@@ -21,6 +21,8 @@ class USWallFollower : public USSensorListener {
 
         void update(int8_t distances[], size_t distances_size);
 
+        char* toString(char* buffer, size_t buffer_size);
+
     private:
         MovementControl* movementControl;
 };

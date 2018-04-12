@@ -1,3 +1,4 @@
+//This class provides the Arduino a way to play MIDI tones
 String message; //string that stores the incoming message
 
 void setup()
@@ -5,6 +6,7 @@ void setup()
   Serial.begin(9600); //set baud rate
   pinMode(4, OUTPUT);
 }
+//Equation used for MTS
 //fm  =  2(m−69)/12(440 Hz)
 void loop()
 {

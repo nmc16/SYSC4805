@@ -3,11 +3,12 @@ import pygame.midi
 import serial
 from pygame.locals import *
 
+#This script listens for midi events on the host, then sends them out over the selected port
 pygame.init()
 
 pygame.fastevent.init()
 post_event = pygame.fastevent.post
-s = serial.Serial(port="/dev/cu.HC-06-SPPDev", baudrate=9600)
+s = serial.Serial(port="/dev/cu.HC-06-SPPDev", baudrate=9600) #change the port to represent the outgoing Bluetooth port
 pygame.midi.init()
 in_id = pygame.midi.get_default_input_id()
 print("Got ID: %d\n" % in_id)
@@ -31,7 +32,7 @@ while True:
         for m_e in midi_evs:
             pygame.fastevent.post(m_e)
             print("Data sent: " + str(m_e.data1))
-            if m_e.data2 != 127:
+            if m_e.data2 != 127: # Check to make sure the MIDI event is not a key release so we dont repeat a tone
                 s.write(str(m_e.data1))
             #s.write("/n")
 print "exit button clicked."
